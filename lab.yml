@@ -18,7 +18,6 @@ dependencies:
     - accelbrainbeat==1.0.5
     - asyncio==3.4.3
     - beautifulsoup4==4.9.3
-    - braintech-obci-signal-processing==refs-keep-around-a030cb6b835df1d636a091dbb66b06e4504428ee
     - chardet==4.0.0
     - cycler==0.10.0
     - docopt==0.6.2
@@ -32,7 +31,6 @@ dependencies:
     - mne-realtime==0.1.dev0
     - numba==0.53.1
     - numpy==1.16.6
-    - obci-demo==refs-keep-around-a030cb6b835df1d636a091dbb66b06e4504428ee
     - packaging==20.9
     - pillow==8.1.2
     - pipwin==0.5.1

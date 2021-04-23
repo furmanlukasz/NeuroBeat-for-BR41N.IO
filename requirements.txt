@@ -4,7 +4,6 @@
 accelbrainbeat=1.0.5=pypi_0
 asyncio=3.4.3=pypi_0
 beautifulsoup4=4.9.3=pypi_0
-braintech-obci-signal-processing=refs-keep-around-a030cb6b835df1d636a091dbb66b06e4504428ee=pypi_0
 ca-certificates=2021.1.19=haa95532_1
 certifi=2020.12.5=py39haa95532_0
 chardet=4.0.0=pypi_0
@@ -20,7 +19,6 @@ mne=0.22.1=pypi_0
 mne-realtime=0.1.dev0=pypi_0
 numba=0.53.1=pypi_0
 numpy=1.20.2=pypi_0
-obci-demo=refs-keep-around-a030cb6b835df1d636a091dbb66b06e4504428ee=pypi_0
 openssl=1.1.1k=h2bbff1b_0
 packaging=20.9=pypi_0
 pillow=8.1.2=pypi_0

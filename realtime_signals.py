@@ -15,11 +15,142 @@ import numpy as np
 import math
 import asyncio
 import scipy
+import threading
+import _thread
+
+import socket 
+
+upd_ip = "127.0.0.1"
+udp_port = 7000
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 from scipy import signal
 from scipy.signal import butter, lfilter
-n = 2500
-rt = 8
+from matplotlib import pyplot as plt
+
+n = 2500 # displayed sample in gui window
+rt = 8 # samples in package per pull
+streams = resolve_stream()
+inlet = StreamInlet(streams[0])
+
+DATA = []
+
+class Unicorn(object):
+    def __init__(self):
+        pass
+    
+    def stream_data(self):
+        newl = []
+        for i in range(rt):
+            sample, timestamp = inlet.pull_sample()   
+            newl.append(sample)
+        #await asyncio.sleep(1)
+        return np.transpose(np.array(newl))
+
+    def buffer(self):
+        while True:
+            sample, timestamp = inlet.pull_sample()   
+            DATA.append(sample)
+        
+        
+        
+            
+
+    def get_data(self,lenght):
+        data = []    
+        for i in range(lenght):
+            sample, timestamp = inlet.pull_sample()   
+            data.append(sample)
+        
+        return np.transpose(np.array(data))
+
+    def show_data(self,data):
+        
+        plt.title("Unicorn package Data") 
+        plt.xlabel("x axis caption") 
+        plt.ylabel("y axis caption") 
+        #print(len(data[0]))
+        for j in range(0,8):
+            #print(data[j])
+            y = data[j]
+            x = np.arange(0,len(data[j]))
+            #plt.plot(x,y) 
+        #plt.show()
+        #await asyncio.sleep(1)
+    
+    async def main(self,data):
+        await asyncio.gather(self.stream_data(),self.show_data(data))
+
+      
+
+
+
+class Filter:
+  """
+    This class creates filters. The input in creating object of the class is:
+    order - order of the filter - int
+    crit_freq - critical frequencies - array of length 2
+    btype - type of the filter, default is "bandpass" - string with possible values of "bandpass", "lowpass", "highpass", "bandstop"
+    fs - sampling frequency, default is 250 - int
+
+    n_filters counts the number of created objects of the class
+    n_channels is an integer of number of channels which should be filtered
+ """
+
+n_filters = 0
+n_channels = 17
+
+def __init__(self, order, crit_freq, btype='bandpass', fs=250):
+    self.order = order
+    self.crit_freq = crit_freq
+    self.btype = btype
+    self.fs = fs
+    self.b, self.a = signal.iirfilter(self.order, self.crit_freq, rp=None, rs=None, btype=self.btype, analog=False, ftype='butter', output='ba', fs=self.fs)
+
+    Filter.n_filters += 1
+
+#@classmethod
+def set_channels(cls, n_channels):
+    #method to set number of channels for all filters
+    cls.n_channels = n_channels
+
+def print_parameters(self):
+    #method to print parameters of a filter
+    print("Order of filter: {} \n".format(self.order))
+    print("Critical frequency: {} \n".format(self.crit_freq))
+    print("Type: {} \n".format(self.btype))
+    print("Sampling frequency: {} \n".format(self.fs))
+
+def set_min_threshold(self, min_threshold):
+    #method to manualy set minimum value of threshold used in rescaling (in calibration process)
+    self.min_threshold = min_threshold
+
+def set_max_threshold(self, max_threshold):
+    #method to manualy set maximum value of threshold used in rescaling (in calibration process)
+    self.max_threshold = max_threshold
+
+def get_data(self, wave):
+    """
+        method used to use filter in preprocessing, input is wave to filter
+        minimum and maximum value of threshold is automatically set in preprocessing to be further utilize in calibration process
+        returns filtered data in the form of numpy array
+    """
+    data = np.array([lfilter(self.b, self.a, wave[i]) for i in range(self.n_channels)])
+    self.min_threshold = np.min(data)
+    self.max_threshold = np.max(data)
+    return data
+
+def get_data_rescaled(self, wave):
+    """
+        used to filter data in training. Rescales the input data according to previously set thresholds and return filtered numpy array
+    """
+    m = (self.max_threshold - self.min_threshold)/(np.max(wave) - np.min(wave))
+    b = self.min_threshold - m * np.min(wave)
+    wave = m * wave + b
+    return np.array([lfilter(self.b, self.a, wave[i]) for i in range(self.n_channels)])
+
+
+
 #filter = signal.firwin(200, [0.1, 0.9], pass_zero=False)
 filter = signal.firwin(400, [0.01, 0.06], pass_zero=False)
 b, a =  scipy.signal.iirfilter(5, [7, 8.5], rp=None, rs=None, btype='bandpass', analog=False, ftype='butter', output='ba', fs=250) # bandpas 5th order 2-15 Hz
@@ -74,8 +205,7 @@ m = nrows*ncols
 amplitudes = .1 + .2 * np.random.rand(m, 1).astype(np.float32)
 
 # Generate the signals as a (m, n) array.
-streams = resolve_stream()
-inlet = StreamInlet(streams[0])
+
 y = amplitudes * np.random.randn(m, n).astype(np.float32)
 
 # Color of each vertex (TODO: make it more efficient by using a GLSL-based
@@ -163,15 +293,7 @@ void main() {
 }
 """
 
-async def Unicorn():
-    newl = []
-    stamp = []
-    k = rt
-    
-    for i in range(rt):
-        sample, timestamp = inlet.pull_sample()   
-        newl.append(sample)
-    return np.array(newl)
+
 
 class Canvas(app.Canvas):
     def __init__(self):
@@ -209,29 +331,15 @@ class Canvas(app.Canvas):
 
     def on_timer(self, event):
         """Add some data at the end of each signal (real-time signals)."""
-        k = rt
-        #y = asyncio.run(Unicorn()).astype(np.float32)
-     
-        #y = asyncio.run(Unicorn())
-        # sample, timestamp = inlet.pull_sample()
-        #data = [asyncio.run(Unicorn()) for i in range(10)]
-        #data = np.transpose(data)
-        #print(y.shape)
-        #remap( np.transpose(asyncio.run(Unicorn())), -10000, 10000, -1, 1 )
         
+        o = Unicorn()
+        data = o.get_data(rt)
+        k = len(data[0])
         y[:, :-k] = y[:, k:]
-        y[:, -k:] = remap( np.transpose(asyncio.run(Unicorn())), -40, 40, -1, 1 ) 
-        #remap( np.transpose(asyncio.run(Unicorn())), -7000, 7000, -1, 1 ) 
-        #np.transpose(asyncio.run(Unicorn()))
-        
-        #print(len(y[0]))
-        #print(len(y[0]))
-        #filtered_packet = sig_filt.get(packet)
-        
-        #y2 = lfilter(b, a, data)
-        #y2 = np.array([signal.convolve(y[i], filter, mode='same') for i in range(17) ])
-        y2 = np.array([lfilter(b, a, y[i]) for i in range(17)])
-        self.program['a_position'].set_data(y2.ravel().astype(np.float32))
+        y[:, -k:] = remap((data), -40, 40, -1, 1 ) 
+        t2 = _thread.start_new_thread(printT, ())
+        #y2 = np.array([lfilter(b, a, y[i]) for i in range(17)])
+        self.program['a_position'].set_data(y.ravel().astype(np.float32))
         self.update()
 
     def on_draw(self, event):
@@ -239,8 +347,16 @@ class Canvas(app.Canvas):
         self.program.draw('line_strip')
         
 
+def printT():
+    print(DATA)
+
 if __name__ == '__main__':
     c = Canvas()
+    o = Unicorn()
+    data = o.get_data(250)
+    t1 = _thread.start_new_thread(Unicorn().buffer, (data,))
+   
     app.run()
+    
     #asyncio.run(Unicorn())
 
